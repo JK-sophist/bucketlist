@@ -1,6 +1,6 @@
 # Matching Index Suggestions
 
-메시지 중심 매칭에서 DB 1차 필터(`gender`, `region`, `age`)와 정렬(`lastActiveAt`, `trustScore`) 최적화를 위한 권장 인덱스입니다.
+메시지 중심 매칭에서 DB 1차 필터(`gender`, `region`, `age`)와 정렬(`lastActiveAt`, `trustScore`), 그리고 최근 발송 이력 제외 최적화를 위한 권장 인덱스입니다.
 
 ## users
 
@@ -14,10 +14,26 @@ CREATE INDEX IF NOT EXISTS idx_users_last_active_trust
 ON users ("lastActiveAt" DESC, "trustScore" DESC);
 ```
 
+## messages
+
+```sql
+-- 최근 N일 동일 발신자 발송 이력 조회 최적화
+CREATE INDEX IF NOT EXISTS idx_messages_sender_created
+ON messages ("senderId", "createdAt" DESC);
+```
+
+## message_recipients
+
+```sql
+-- 발송 이력 기반 recipient 제외 조회 최적화
+CREATE INDEX IF NOT EXISTS idx_message_recipients_message_recipient
+ON message_recipients ("messageId", "recipientId");
+```
+
 ## user_keywords
 
 ```sql
--- 후보 유저 키워드 조회 최적화
+-- 후보 유저 키워드 일괄 조회(IN) 최적화
 CREATE INDEX IF NOT EXISTS idx_user_keywords_user_id
 ON user_keywords ("userId");
 
