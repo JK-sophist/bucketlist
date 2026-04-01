@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -24,6 +25,7 @@ export class MatchingService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly keywordsService: KeywordsService,
+    private readonly configService: ConfigService,
   ) {}
 
   async recommend(input: RecommendInput): Promise<{
@@ -35,9 +37,43 @@ export class MatchingService {
       return { selected: null, candidates: [] };
     }
 
-    const allOthers = await this.userRepository.find();
-    const others = allOthers.filter((user) => user.id !== input.senderId);
+    const prefilterLimit = this.configService.get<number>('MATCHING_CANDIDATE_LIMIT', 100);
 
+    // 1) DB 1차 필터: gender / region / age range + limit
+    const baseQuery = this.userRepository
+      .createQueryBuilder('user')
+      .where('user.id != :senderId', { senderId: input.senderId })
+      .orderBy('user.lastActiveAt', 'DESC', 'NULLS LAST')
+      .addOrderBy('user.trustScore', 'DESC')
+      .take(prefilterLimit);
+
+    if (input.conditions?.gender) {
+      baseQuery.andWhere('user.gender = :gender', {
+        gender: input.conditions.gender,
+      });
+    }
+
+    if (input.conditions?.region) {
+      baseQuery.andWhere('user.region = :region', {
+        region: input.conditions.region,
+      });
+    }
+
+    if (input.conditions?.minAge) {
+      baseQuery.andWhere('user.age >= :minAge', {
+        minAge: input.conditions.minAge,
+      });
+    }
+
+    if (input.conditions?.maxAge) {
+      baseQuery.andWhere('user.age <= :maxAge', {
+        maxAge: input.conditions.maxAge,
+      });
+    }
+
+    const prefilteredCandidates = await baseQuery.getMany();
+
+    // 2) 이후 메모리에서 점수 계산
     const userKeywordIds = await this.keywordsService.getUserKeywordIds(input.senderId);
     const messageKeywordIds = await this.keywordsService.getMessageKeywordIds(
       input.messageId,
@@ -45,10 +81,9 @@ export class MatchingService {
 
     const scored: Array<{ user: User; score: number }> = [];
 
-    for (const candidate of others) {
+    for (const candidate of prefilteredCandidates) {
       let score = 0;
 
-      // 조건 점수 (메시지 중심)
       score += this.calculateConditionScore(candidate, input.conditions);
 
       const candidateKeywordIds = await this.keywordsService.getUserKeywordIds(
