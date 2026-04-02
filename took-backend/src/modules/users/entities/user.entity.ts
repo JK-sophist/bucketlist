@@ -28,6 +28,9 @@ export class User extends BaseEntity {
   @Column({ type: 'timestamptz', nullable: true })
   lastActiveAt?: Date;
 
+  @Column({ default: false })
+  isSuspended: boolean;
+
   @Column('simple-array', { nullable: true })
   blockedUserIds?: string[];
 }

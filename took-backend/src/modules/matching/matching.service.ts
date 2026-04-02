@@ -49,6 +49,8 @@ export class MatchingService {
       'MATCHING_RECENT_EXCLUDE_DAYS',
       7,
     );
+    const userKeywordWeight = this.configService.get<number>('MATCHING_USER_KEYWORD_WEIGHT', 4);
+    const messageKeywordWeight = this.configService.get<number>('MATCHING_MESSAGE_KEYWORD_WEIGHT', 6);
 
     const baseQuery = this.userRepository
       .createQueryBuilder('user')
@@ -143,12 +145,12 @@ export class MatchingService {
       const userKeywordMatchCount = candidateKeywordIds.filter((id) =>
         userKeywordIds.includes(id),
       ).length;
-      score += userKeywordMatchCount * 4;
+      score += userKeywordMatchCount * userKeywordWeight;
 
       const messageKeywordMatchCount = candidateKeywordIds.filter((id) =>
         messageKeywordIds.includes(id),
       ).length;
-      score += messageKeywordMatchCount * 6;
+      score += messageKeywordMatchCount * messageKeywordWeight;
 
       // 키워드는 가중치이며, 없어도 매칭 가능
       score += (candidate.trustScore ?? 0) * 0.2;

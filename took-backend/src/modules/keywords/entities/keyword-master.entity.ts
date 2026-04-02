@@ -17,6 +17,9 @@ export class KeywordMaster extends BaseEntity {
   @Column({ default: 0 })
   usageCount: number;
 
+  @Column({ type: 'float', default: 0 })
+  responseRate: number;
+
   @OneToMany(() => KeywordSynonym, (synonym) => synonym.master)
   synonyms: KeywordSynonym[];
 

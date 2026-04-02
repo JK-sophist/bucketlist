@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { RedisModule } from './common/redis/redis.module';
 import { typeOrmOptions } from './config/typeorm.config';
 import { AnonymousThreadsModule } from './modules/anonymous-threads/anonymous-threads.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { BridgeRequestsModule } from './modules/bridge-requests/bridge-requests.module';
 import { ChatMessagesModule } from './modules/chat-messages/chat-messages.module';
@@ -25,6 +26,7 @@ import { UsersModule } from './modules/users/users.module';
     }),
     RedisModule,
     AuthModule,
+    AdminModule,
     UsersModule,
     MessagesModule,
     MessageRecipientsModule,
