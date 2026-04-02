@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { AdminModule } from '../admin/admin.module';
 import { AnonymousThreadsModule } from '../anonymous-threads/anonymous-threads.module';
 import { ChatRoomsModule } from '../chat-rooms/chat-rooms.module';
 import { BridgeRequest } from './entities/bridge-request.entity';
@@ -12,6 +13,7 @@ import { BridgeRequestsService } from './bridge-requests.service';
     TypeOrmModule.forFeature([BridgeRequest]),
     AnonymousThreadsModule,
     ChatRoomsModule,
+    AdminModule,
   ],
   controllers: [BridgeRequestsController],
   providers: [BridgeRequestsService],

@@ -1,6 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
+
+import { PolicyService } from 'src/modules/admin/policy.service';
 
 import { AddMessageKeywordsDto } from './dto/add-message-keywords.dto';
 import { AddUserKeywordsDto } from './dto/add-user-keywords.dto';
@@ -23,6 +25,7 @@ export class KeywordsService {
     private readonly userKeywordRepository: Repository<UserKeyword>,
     @InjectRepository(MessageKeyword)
     private readonly messageKeywordRepository: Repository<MessageKeyword>,
+    private readonly policyService: PolicyService,
   ) {}
 
   async normalizeKeyword(rawKeyword: string): Promise<KeywordMaster> {
@@ -153,6 +156,11 @@ export class KeywordsService {
   }
 
   async addUserKeywords(dto: AddUserKeywordsDto): Promise<UserKeyword[]> {
+    const freeKeywordLimit = await this.policyService.getNumber('FREE_KEYWORD_LIMIT', 10);
+    if ((dto.freeKeywords ?? []).length > freeKeywordLimit) {
+      throw new BadRequestException(`Free keyword limit exceeded: ${freeKeywordLimit}`);
+    }
+
     const mergedKeywords = [
       ...(dto.recommendedKeywords ?? []),
       ...(dto.freeKeywords ?? []),
@@ -213,10 +221,13 @@ export class KeywordsService {
     return result;
   }
 
-  getRecommendedKeywords(limit = 10): Promise<KeywordMaster[]> {
+  async getRecommendedKeywords(limit?: number): Promise<KeywordMaster[]> {
+    const defaultLimit = await this.policyService.getNumber('RECOMMENDED_KEYWORD_LIMIT', 10);
+    const resolvedLimit = limit ?? defaultLimit;
+
     return this.masterRepository.find({
       order: { usageCount: 'DESC' },
-      take: limit,
+      take: resolvedLimit,
     });
   }
 

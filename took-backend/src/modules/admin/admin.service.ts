@@ -14,6 +14,8 @@ import { Message } from '../messages/entities/message.entity';
 import { User } from '../users/entities/user.entity';
 import { AdminLog } from './entities/admin-log.entity';
 import { AdminPolicy } from './entities/admin-policy.entity';
+import { PolicyHistory } from './entities/policy-history.entity';
+import { PolicyService } from './policy.service';
 
 @Injectable()
 export class AdminService {
@@ -38,13 +40,11 @@ export class AdminService {
     private readonly keywordRepository: Repository<KeywordMaster>,
     @InjectRepository(KeywordSynonym)
     private readonly synonymRepository: Repository<KeywordSynonym>,
-    @InjectRepository(AdminPolicy)
-    private readonly policyRepository: Repository<AdminPolicy>,
     @InjectRepository(AdminLog)
     private readonly logRepository: Repository<AdminLog>,
+    private readonly policyService: PolicyService,
   ) {}
 
-  // 1) User management
   getUsers(): Promise<User[]> {
     return this.userRepository.find();
   }
@@ -78,7 +78,6 @@ export class AdminService {
     return saved;
   }
 
-  // 2) Message views
   getMessages(): Promise<Message[]> {
     return this.messageRepository.find();
   }
@@ -95,7 +94,6 @@ export class AdminService {
     return this.replyRepository.find();
   }
 
-  // 3) Bridge management
   getBridgeRequests(): Promise<BridgeRequest[]> {
     return this.bridgeRepository.find();
   }
@@ -122,7 +120,6 @@ export class AdminService {
     return saved;
   }
 
-  // 4) chat views
   getChatRooms(): Promise<ChatRoom[]> {
     return this.chatRoomRepository.find();
   }
@@ -131,7 +128,6 @@ export class AdminService {
     return this.chatMessageRepository.find();
   }
 
-  // 5) keyword management
   getKeywords(): Promise<KeywordMaster[]> {
     return this.keywordRepository.find();
   }
@@ -170,24 +166,36 @@ export class AdminService {
     );
   }
 
-  // 6) policy management
   getPolicies(): Promise<AdminPolicy[]> {
-    return this.policyRepository.find();
+    return this.policyService.getPolicies();
   }
 
-  async setPolicy(policyKey: string, policyValue: string): Promise<AdminPolicy> {
-    const existing = await this.policyRepository.findOne({ where: { policyKey } });
-    if (existing) {
-      existing.policyValue = policyValue;
-      return this.policyRepository.save(existing);
-    }
-
-    return this.policyRepository.save(
-      this.policyRepository.create({ policyKey, policyValue }),
-    );
+  setPolicy(params: {
+    policyKey: string;
+    policyValue: string;
+    adminUserId?: string;
+    reason?: string;
+    category?: string;
+    valueType?: 'number' | 'string' | 'boolean' | 'json';
+    description?: string;
+    editable?: boolean;
+  }): Promise<AdminPolicy> {
+    return this.policyService.setPolicy({
+      policyKey: params.policyKey,
+      policyValue: params.policyValue,
+      updatedBy: params.adminUserId,
+      reason: params.reason,
+      category: params.category,
+      valueType: params.valueType,
+      description: params.description,
+      editable: params.editable,
+    });
   }
 
-  // 7) admin logs
+  getPolicyHistories(policyKey?: string): Promise<PolicyHistory[]> {
+    return this.policyService.getPolicyHistories(policyKey);
+  }
+
   getLogs(): Promise<AdminLog[]> {
     return this.logRepository.find({ order: { createdAt: 'DESC' } });
   }

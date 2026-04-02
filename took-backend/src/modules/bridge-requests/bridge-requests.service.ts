@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+import { PolicyService } from 'src/modules/admin/policy.service';
 import { AnonymousThreadsService } from 'src/modules/anonymous-threads/anonymous-threads.service';
 import { ChatRoomsService } from 'src/modules/chat-rooms/chat-rooms.service';
 
@@ -19,6 +20,7 @@ export class BridgeRequestsService {
     private readonly repository: Repository<BridgeRequest>,
     private readonly anonymousThreadsService: AnonymousThreadsService,
     private readonly chatRoomsService: ChatRoomsService,
+    private readonly policyService: PolicyService,
   ) {}
 
   findAll(): Promise<BridgeRequest[]> {
@@ -37,6 +39,11 @@ export class BridgeRequestsService {
 
     if (existing) {
       throw new BadRequestException('Bridge request already exists for this thread');
+    }
+
+    const bridgeMinRounds = await this.policyService.getNumber('BRIDGE_MIN_ROUNDS', 1);
+    if (dto.roundNumber < bridgeMinRounds) {
+      throw new BadRequestException(`Bridge requires at least round ${bridgeMinRounds}`);
     }
 
     if (thread.currentRoundNumber !== dto.roundNumber) {

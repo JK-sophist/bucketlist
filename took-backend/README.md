@@ -16,6 +16,7 @@ Took 서비스 메시징 + 키워드 매칭 구조를 반영한 NestJS 백엔드
 - message_keywords
 - admin_logs
 - admin_policies
+- policy_histories
 
 ## 주요 기능
 - 키워드 정규화 (`keyword-normalizer`)
@@ -28,11 +29,28 @@ Took 서비스 메시징 + 키워드 매칭 구조를 반영한 NestJS 백엔드
 - 관리자 기능: 유저/메시지/돌다리/채팅/키워드/정책/로그 관리
 - 매칭 인덱스 제안: docs/matching-indexes.md
 
-## 정책 키
-- `MATCHING_CANDIDATE_LIMIT`
-- `MATCHING_RECENT_EXCLUDE_DAYS`
-- `MATCHING_USER_KEYWORD_WEIGHT`
-- `MATCHING_MESSAGE_KEYWORD_WEIGHT`
+## 운영 정책 관리 원칙
+- `.env`는 **인프라 연결값**(DB/Redis/JWT/Port)만 관리합니다.
+- 운영 정책값(매칭/메시지/키워드/돌다리/신고/보상/구독)은 **DB(admin_policies)** 에서 읽습니다.
+- 정책 변경 이력은 **policy_histories**에 기록됩니다.
+
+## 필수 정책 키
+- MATCHING_CANDIDATE_LIMIT
+- MATCHING_RECENT_EXCLUDE_DAYS
+- MATCHING_USER_KEYWORD_WEIGHT
+- MATCHING_MESSAGE_KEYWORD_WEIGHT
+- TRUST_SCORE_WEIGHT
+- ACTIVITY_WEIGHT
+- DAILY_FREE_MESSAGE_LIMIT
+- MESSAGE_MAX_LENGTH
+- FREE_KEYWORD_LIMIT
+- RECOMMENDED_KEYWORD_LIMIT
+- BRIDGE_MIN_ROUNDS
+- AUTO_HIDE_REPORT_THRESHOLD
+- AUTO_SUSPEND_THRESHOLD
+- DUPLICATE_MESSAGE_BLOCK_MINUTES
+- SUBSCRIPTION_EXTRA_CONDITION_LIMIT
+- EXTRA_SEND_TICKET_PRICE
 
 ## 실행
 ```bash

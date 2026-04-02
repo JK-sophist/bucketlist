@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { AdminModule } from '../admin/admin.module';
+
 import { KeywordMaster } from './entities/keyword-master.entity';
 import { KeywordSynonym } from './entities/keyword-synonym.entity';
 import { MessageKeyword } from './entities/message-keyword.entity';
@@ -10,6 +12,7 @@ import { KeywordsService } from './keywords.service';
 
 @Module({
   imports: [
+    AdminModule,
     TypeOrmModule.forFeature([
       KeywordMaster,
       KeywordSynonym,

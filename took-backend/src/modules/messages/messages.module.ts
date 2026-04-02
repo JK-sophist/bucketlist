@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { AdminModule } from '../admin/admin.module';
 import { MatchingModule } from '../matching/matching.module';
 import { KeywordsModule } from '../keywords/keywords.module';
 import { User } from '../users/entities/user.entity';
@@ -16,6 +17,7 @@ import { MessagesService } from './messages.service';
     AnonymousThreadsModule,
     MatchingModule,
     KeywordsModule,
+    AdminModule,
   ],
   controllers: [MessagesController],
   providers: [MessagesService],

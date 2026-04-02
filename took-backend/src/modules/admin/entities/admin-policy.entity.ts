@@ -8,6 +8,21 @@ export class AdminPolicy extends BaseEntity {
   @Column()
   policyKey: string;
 
+  @Column()
+  category: string;
+
   @Column({ type: 'text' })
   policyValue: string;
+
+  @Column()
+  valueType: 'number' | 'string' | 'boolean' | 'json';
+
+  @Column({ type: 'text', nullable: true })
+  description?: string;
+
+  @Column({ default: true })
+  editable: boolean;
+
+  @Column('uuid', { nullable: true })
+  updatedBy?: string;
 }

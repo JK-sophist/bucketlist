@@ -4,6 +4,7 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { AnonymousThread } from 'src/modules/anonymous-threads/entities/anonymous-thread.entity';
 import { AdminLog } from 'src/modules/admin/entities/admin-log.entity';
 import { AdminPolicy } from 'src/modules/admin/entities/admin-policy.entity';
+import { PolicyHistory } from 'src/modules/admin/entities/policy-history.entity';
 import { BridgeRequest } from 'src/modules/bridge-requests/entities/bridge-request.entity';
 import { ChatMessage } from 'src/modules/chat-messages/entities/chat-message.entity';
 import { ChatRoom } from 'src/modules/chat-rooms/entities/chat-room.entity';
@@ -40,6 +41,7 @@ export const typeOrmOptions = (
     MessageKeyword,
     AdminPolicy,
     AdminLog,
+    PolicyHistory,
   ],
   synchronize: configService.get<string>('NODE_ENV', 'development') !== 'production',
 });

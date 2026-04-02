@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Delete } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Delete, Query } from '@nestjs/common';
 
 import { AdminService } from './admin.service';
 
@@ -112,8 +112,25 @@ export class AdminController {
   }
 
   @Post('policies')
-  setPolicy(@Body() body: { policyKey: string; policyValue: string }) {
-    return this.adminService.setPolicy(body.policyKey, body.policyValue);
+  setPolicy(
+    @Body()
+    body: {
+      policyKey: string;
+      policyValue: string;
+      adminUserId?: string;
+      reason?: string;
+      category?: string;
+      valueType?: 'number' | 'string' | 'boolean' | 'json';
+      description?: string;
+      editable?: boolean;
+    },
+  ) {
+    return this.adminService.setPolicy(body);
+  }
+
+  @Get('policies/histories')
+  getPolicyHistories(@Query('policyKey') policyKey?: string) {
+    return this.adminService.getPolicyHistories(policyKey);
   }
 
   @Get('logs')

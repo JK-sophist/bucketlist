@@ -14,6 +14,8 @@ import { User } from '../users/entities/user.entity';
 import { AdminController } from './admin.controller';
 import { AdminLog } from './entities/admin-log.entity';
 import { AdminPolicy } from './entities/admin-policy.entity';
+import { PolicyHistory } from './entities/policy-history.entity';
+import { PolicyService } from './policy.service';
 import { AdminService } from './admin.service';
 
 @Module({
@@ -31,9 +33,11 @@ import { AdminService } from './admin.service';
       KeywordSynonym,
       AdminPolicy,
       AdminLog,
+      PolicyHistory,
     ]),
   ],
   controllers: [AdminController],
-  providers: [AdminService],
+  providers: [AdminService, PolicyService],
+  exports: [PolicyService],
 })
 export class AdminModule {}

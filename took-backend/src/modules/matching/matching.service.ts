@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 
 import { MessageRecipient } from 'src/modules/message-recipients/entities/message-recipient.entity';
 import { Message } from 'src/modules/messages/entities/message.entity';
 import { UserKeyword } from 'src/modules/keywords/entities/user-keyword.entity';
+import { PolicyService } from 'src/modules/admin/policy.service';
 import { KeywordsService } from 'src/modules/keywords/keywords.service';
 import { User } from 'src/modules/users/entities/user.entity';
 
@@ -32,7 +32,7 @@ export class MatchingService {
     @InjectRepository(MessageRecipient)
     private readonly messageRecipientRepository: Repository<MessageRecipient>,
     private readonly keywordsService: KeywordsService,
-    private readonly configService: ConfigService,
+    private readonly policyService: PolicyService,
   ) {}
 
   async recommend(input: RecommendInput): Promise<{
@@ -44,13 +44,15 @@ export class MatchingService {
       return { selected: null, candidates: [] };
     }
 
-    const prefilterLimit = this.configService.get<number>('MATCHING_CANDIDATE_LIMIT', 100);
-    const recentExcludeDays = this.configService.get<number>(
+    const prefilterLimit = await this.policyService.getNumber('MATCHING_CANDIDATE_LIMIT', 100);
+    const recentExcludeDays = await this.policyService.getNumber(
       'MATCHING_RECENT_EXCLUDE_DAYS',
       7,
     );
-    const userKeywordWeight = this.configService.get<number>('MATCHING_USER_KEYWORD_WEIGHT', 4);
-    const messageKeywordWeight = this.configService.get<number>('MATCHING_MESSAGE_KEYWORD_WEIGHT', 6);
+    const userKeywordWeight = await this.policyService.getNumber('MATCHING_USER_KEYWORD_WEIGHT', 4);
+    const messageKeywordWeight = await this.policyService.getNumber('MATCHING_MESSAGE_KEYWORD_WEIGHT', 6);
+    const trustScoreWeight = await this.policyService.getNumber('TRUST_SCORE_WEIGHT', 0.2);
+    const activityWeight = await this.policyService.getNumber('ACTIVITY_WEIGHT', 1);
 
     const baseQuery = this.userRepository
       .createQueryBuilder('user')
@@ -153,13 +155,13 @@ export class MatchingService {
       score += messageKeywordMatchCount * messageKeywordWeight;
 
       // 키워드는 가중치이며, 없어도 매칭 가능
-      score += (candidate.trustScore ?? 0) * 0.2;
+      score += (candidate.trustScore ?? 0) * trustScoreWeight;
 
       if (candidate.lastActiveAt) {
         const diffMs = Date.now() - candidate.lastActiveAt.getTime();
         const dayMs = 24 * 60 * 60 * 1000;
         const inactiveDays = diffMs / dayMs;
-        score += Math.max(0, 10 - inactiveDays);
+        score += Math.max(0, 10 - inactiveDays) * activityWeight;
       }
 
       scored.push({ user: candidate, score });

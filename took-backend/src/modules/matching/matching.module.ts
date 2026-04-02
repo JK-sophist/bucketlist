@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { AdminModule } from '../admin/admin.module';
 import { UserKeyword } from '../keywords/entities/user-keyword.entity';
 import { KeywordsModule } from '../keywords/keywords.module';
 import { MessageRecipient } from '../message-recipients/entities/message-recipient.entity';
@@ -12,6 +13,7 @@ import { MatchingService } from './matching.service';
   imports: [
     TypeOrmModule.forFeature([User, UserKeyword, MessageRecipient]),
     KeywordsModule,
+    AdminModule,
   ],
   providers: [MatchingService],
   controllers: [MatchingController],
