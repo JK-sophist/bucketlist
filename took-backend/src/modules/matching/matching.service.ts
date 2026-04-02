@@ -170,12 +170,39 @@ export class MatchingService {
       return { selected: null, candidates: [] };
     }
 
-    const randomIndex = Math.floor(Math.random() * topCandidates.length);
+    const weightedSelected = this.pickWeightedRandom(topCandidates);
 
     return {
-      selected: topCandidates[randomIndex].user,
+      selected: weightedSelected,
       candidates: topCandidates,
     };
+  }
+
+
+  private pickWeightedRandom(candidates: Array<{ user: User; score: number }>): User {
+    const normalized = candidates.map((candidate) => ({
+      user: candidate.user,
+      score: Math.max(candidate.score, 0),
+    }));
+
+    const totalScore = normalized.reduce((sum, candidate) => sum + candidate.score, 0);
+
+    if (totalScore <= 0) {
+      const fallbackIndex = Math.floor(Math.random() * candidates.length);
+      return candidates[fallbackIndex].user;
+    }
+
+    const randomPoint = Math.random() * totalScore;
+    let cumulative = 0;
+
+    for (const candidate of normalized) {
+      cumulative += candidate.score;
+      if (randomPoint <= cumulative) {
+        return candidate.user;
+      }
+    }
+
+    return normalized[normalized.length - 1].user;
   }
 
   private calculateConditionScore(
