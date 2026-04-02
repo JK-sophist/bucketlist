@@ -2,17 +2,22 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+import { RedisService } from 'src/common/redis/redis.service';
+
 import { POLICY_DEFAULTS } from './policy-defaults';
 import { AdminPolicy } from './entities/admin-policy.entity';
 import { PolicyHistory } from './entities/policy-history.entity';
 
 @Injectable()
 export class PolicyService implements OnModuleInit {
+  private readonly cacheTtlSeconds = 60;
+
   constructor(
     @InjectRepository(AdminPolicy)
     private readonly policyRepository: Repository<AdminPolicy>,
     @InjectRepository(PolicyHistory)
     private readonly historyRepository: Repository<PolicyHistory>,
+    private readonly redisService: RedisService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -51,7 +56,7 @@ export class PolicyService implements OnModuleInit {
   }
 
   async getNumber(key: string, fallback: number): Promise<number> {
-    const policy = await this.policyRepository.findOne({ where: { policyKey: key } });
+    const policy = await this.getPolicyByKey(key);
     if (!policy) return fallback;
 
     const parsed = Number(policy.policyValue);
@@ -59,7 +64,7 @@ export class PolicyService implements OnModuleInit {
   }
 
   async getString(key: string, fallback: string): Promise<string> {
-    const policy = await this.policyRepository.findOne({ where: { policyKey: key } });
+    const policy = await this.getPolicyByKey(key);
     return policy?.policyValue ?? fallback;
   }
 
@@ -109,6 +114,33 @@ export class PolicyService implements OnModuleInit {
       }),
     );
 
+    await this.redisService.deleteCache(this.getCacheKey(params.policyKey));
+
     return saved;
+  }
+
+  private async getPolicyByKey(policyKey: string): Promise<AdminPolicy | null> {
+    const cacheKey = this.getCacheKey(policyKey);
+    const cached = await this.redisService.getCache(cacheKey);
+    if (cached) {
+      return JSON.parse(cached) as AdminPolicy;
+    }
+
+    const policy = await this.policyRepository.findOne({ where: { policyKey } });
+    if (!policy) {
+      return null;
+    }
+
+    await this.redisService.setCache(
+      cacheKey,
+      JSON.stringify(policy),
+      this.cacheTtlSeconds,
+    );
+
+    return policy;
+  }
+
+  private getCacheKey(policyKey: string): string {
+    return `policy:${policyKey}`;
   }
 }

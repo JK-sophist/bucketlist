@@ -22,6 +22,11 @@ export class RedisService implements OnModuleDestroy {
     return this.client.get(key);
   }
 
+
+  async deleteCache(key: string): Promise<void> {
+    await this.client.del(key);
+  }
+
   enqueue(queueName: string, payload: string): Promise<number> {
     return this.client.lpush(`queue:${queueName}`, payload);
   }
